@@ -116,43 +116,43 @@ spiState SPI_1::getStatus(){
     return USCI0_status;
 }
 
-#pragma vector=USCIAB0RX_VECTOR
-__interrupt void USCIA0RX_ISR(void){
-    if (IFG2 & UCA0RXIFG){ //Sanity check, I Flag 2 corresponds to the USCI 0, and it should be a Rx interrupt
-
-        if( USCI0_status==spiState::RECEIVE || USCI0_status==spiState::DUPLEX){ //SPI is in RECIEVE MODE
-            if(USCI0_rxAvail>=SPI_BUFF_SIZE) //if the buffer is full or you aren't interested in the result
-                return;
-            USCI0_rxBuff[USCI0_rxAvail] = (uint8_t) UCA0RXBUF; //SUUUUUUUUUUPer unsafe, fix later
-            USCI0_rxAvail++;
-
-        }else if(USCI0_status==spiState::TRANSMIT){ //SPI is in TRANSMIT MODE
-            uint8_t garbage = UCA0RXBUF; //clear Rx interrupt
-            (void)garbage;
-
-            if(USCI0_txAvail==0){
-                USCI0_status=spiState::IDLE;
-            }else{
-                UCA0TXBUF = USCI0_txBuff[USCI0_txAvail-1];
-                USCI0_txAvail--;
-            }
-        }
-    }
-}
-
-//#pragma vector=USCIAB0TX_VECTOR
-//__interrupt void USCIA0TX_ISR(void){
+//#pragma vector=USCIAB0RX_VECTOR
+//__interrupt void USCIA0RX_ISR(void){
+//    if (IFG2 & UCA0RXIFG){ //Sanity check, I Flag 2 corresponds to the USCI 0, and it should be a Rx interrupt
 //
-//    if (IFG2 & UCA0TXIFG){ //Sanity check, I Flag 2 corresponds to the USCI 0, and it should be a Tx interrupt
-//        if(USCI0_txAvail>=SPI_BUFF_SIZE) //Logically impossible, but safety is best
-//            return;
-//        else if(USCI0_txAvail==0){
-//            USCI0_status=spiState::IDLE;
-//            IFG2 &= ~UCA0TXIFG;
-//            return;
+//        if( USCI0_status==spiState::RECEIVE || USCI0_status==spiState::DUPLEX){ //SPI is in RECIEVE MODE
+//            if(USCI0_rxAvail>=SPI_BUFF_SIZE) //if the buffer is full
+//                return;
+//            USCI0_rxBuff[USCI0_rxAvail] = (uint8_t) UCA0RXBUF; //SUUUUUUUUUUPer unsafe, fix later
+//            USCI0_rxAvail++;
+//
+//        }else if(USCI0_status==spiState::TRANSMIT){ //SPI is in TRANSMIT MODE
+//            uint8_t garbage = UCA0RXBUF; //clear Rx interrupt
+//            (void)garbage;
+//
+//            if(USCI0_txAvail==0){
+//                USCI0_status=spiState::IDLE;
+//            }else{
+//                UCA0TXBUF = USCI0_txBuff[USCI0_txAvail-1];
+//                USCI0_txAvail--;
+//            }
 //        }
-//        UCA0TXBUF = USCI0_txBuff[USCI0_txAvail-1]; //SUUUUUUUUUUPer unsafe, fix later, clears flag
-//        USCI0_txAvail--;
-//
 //    }
 //}
+//
+////#pragma vector=USCIAB0TX_VECTOR
+////__interrupt void USCIA0TX_ISR(void){
+////
+////    if (IFG2 & UCA0TXIFG){ //Sanity check, I Flag 2 corresponds to the USCI 0, and it should be a Tx interrupt
+////        if(USCI0_txAvail>=SPI_BUFF_SIZE) //Logically impossible, but safety is best
+////            return;
+////        else if(USCI0_txAvail==0){
+////            USCI0_status=spiState::IDLE;
+////            IFG2 &= ~UCA0TXIFG;
+////            return;
+////        }
+////        UCA0TXBUF = USCI0_txBuff[USCI0_txAvail-1]; //SUUUUUUUUUUPer unsafe, fix later, clears flag
+////        USCI0_txAvail--;
+////
+////    }
+////}

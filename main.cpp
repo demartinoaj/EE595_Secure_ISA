@@ -4,6 +4,7 @@
 #include "system.hpp"
 #include "SPI.hpp"
 #include "Micron23K640_SRAM.hpp"
+#include "USCI.hpp"
 
 SPI_1 SPI1;
 
@@ -38,17 +39,18 @@ void main(void)
         P1OUT ^= PIN6;              // toggle P1.6 LED2
         for(i=100000; i>0; i--);     //
 
-
-        P1OUT |=PIN3;
-
-        P1OUT &=~PIN3;
+//
+//        P1OUT |=PIN3;
+//
+//        P1OUT &=~PIN3;
 //        uint8_t cmd=0x05;
 //        SPI1.write(&cmd, 1);
 //        SPI1.read(1);
         //SPI1.getRxBuff(&buffer, 1);
-        //SRAM.getStatusReg(&buffer);
-       // SRAM.writeByte(0x6969, 0x55);
-        SRAM.readByte(0x8394, &returnData);
+        SRAM.getStatusReg(&buffer);
+        SRAM.getStatusReg(&buffer);
+        //SRAM.writeByte(0x6969, 0x55);
+        //SRAM.readByte(0x8394, &returnData);
 
         __delay_cycles(5000);
 
