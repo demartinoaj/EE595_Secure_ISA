@@ -28,7 +28,7 @@ void main(void)
     P1OUT |=PIN3;
 
     volatile uint32_t i;        // volatile to prevent optimization
-    SPI1.init();
+    SPI1.init(&USCIA0);
     __enable_interrupt();
     SRAM.init();
 

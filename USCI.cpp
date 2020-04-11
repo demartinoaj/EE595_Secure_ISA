@@ -7,8 +7,8 @@
  */
 #include "USCI.hpp"
 
-USCI_A0 USCIB0;
-USCI_B0 USCIA0;
+USCI_B0 USCIB0;
+USCI_A0 USCIA0;
 
 uint8_t USCI_B0::lock=0;
 uint8_t USCI_A0::lock=0;

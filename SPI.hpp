@@ -31,14 +31,15 @@
 #ifndef SPI_HPP_
 #define SPI_HPP_
 
-#define SPI_BUFF_SIZE 32
+#define SPI_BUFF_SIZE 80
+#include "USCI.hpp"
 
 enum class spiState {IDLE, TRANSMIT, RECEIVE, DUPLEX};
 
 /*  Abstract base class for all SPI instances*/
 class SPI{
 public:
-    virtual sysStatus init()=0;                                        // Initialize one of the USCI in SPI mode
+    virtual sysStatus init(USCI* usciRegs)=0;                                        // Initialize one of the USCI in SPI mode
     virtual sysStatus ChangeSettings()=0;                              // A user-defined function called in init(). Used to override default SPI settings
     virtual sysStatus write(uint8_t bytes[], uint16_t size)=0;         // Write size bytes to the SPI bus. Blocking Note: size probably overkill
     virtual sysStatus read(uint16_t numBytes)=0;                       // Read size bytes from the SPI bus. Blocking
@@ -59,7 +60,7 @@ class SPI_1:public SPI{
     friend sysStatus sys_cpBuff(Type inBuff[], Type outBuff[], uint16_t size, uint16_t offset);
 
 public:
-    sysStatus init();
+    sysStatus init(USCI* usciRegs);
     virtual sysStatus ChangeSettings();
     sysStatus write(uint8_t val[], uint16_t size);
     sysStatus read(uint16_t numBytes);

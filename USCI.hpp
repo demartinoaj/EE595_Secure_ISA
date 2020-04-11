@@ -11,7 +11,7 @@
 
 #include "system.hpp"
 
-#define USCI_BUFF_SIZE 32   //Size of the USCI buffer, in bytes
+#define USCI_BUFF_SIZE 8   //Size of the USCI buffer, in bytes
 
 class USCI{
 public:
@@ -24,8 +24,8 @@ public:
     volatile uint16_t txAvail=0;                 // The number of bytes currently in the Tx buffer
 
     //Registers
-    const volatile uint8_t* CTL0;
-    const volatile uint8_t* CTL1;
+    volatile uint8_t const* CTL0;
+    volatile uint8_t * CTL1;
     const volatile uint8_t* BR0;
     const volatile uint8_t* BR1;
     const volatile uint8_t* RXBUF;
@@ -93,4 +93,5 @@ protected:
 
 };
 
+extern USCI_A0 USCIA0;
 #endif /* USCI_HPP_ */

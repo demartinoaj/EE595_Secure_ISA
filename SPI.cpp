@@ -8,6 +8,7 @@
 #include "system.hpp"
 #include "SPI.hpp"
 
+
 //******************************************************************************
 // SPI Interrupt ***************************************************************
 //******************************************************************************
@@ -17,11 +18,13 @@ static volatile uint8_t USCI0_rxBuff[SPI_BUFF_SIZE];      // The Rx buffer
 static volatile uint8_t USCI0_txBuff[SPI_BUFF_SIZE];      // The Tx buffer
 static volatile uint8_t USCI0_rxAvail=0;                  // The number of bytes currently in the Rx buffer
 static volatile uint16_t USCI0_txAvail=0;                 // The number of bytes currently in the Tx buffer
+static volatile uint8_t USCI0_rxPos=0;                    // The index of the next byte to send in the Rx buffer
+static volatile uint16_t USCI0_txPos=0;                   // The index of the next byte to send in the the Tx buffer
 static volatile spiState USCI0_status=spiState::IDLE;
 
 static const uint8_t DUMMY_COMMAND=0x00;
 
-sysStatus SPI_1::init(){
+sysStatus SPI_1::init(USCI* usciRegs){
 
     UCA0CTL0 |=UCSYNC;                      // Set USCI0 to SPI mode
     UCA0CTL1 |= UCSSEL_2;                   //  select SMCLK as the clock source
@@ -38,7 +41,8 @@ sysStatus SPI_1::init(){
     //UCA0CTL0 &= UCMODE1;
 
     UCA0MCTL = 0;                             // Not used in SPI (modulation)
-    UCA0CTL1 &= ~UCSWRST;                     // Exit Reset mode, enabling the module
+    //UCA0CTL1 &= ~UCSWRST;                     // Exit Reset mode, enabling the module
+    (*(usciRegs->CTL1)) &= ~UCSWRST;
     IE2 |= UCA0RXIE;                          // Enable USCI0 RX interrupt
     //IE2 |= UCA0TXIE;                          // Enable USCI0 TX interrupt
     //IFG2 &= ~UCA0TXIFG;
@@ -64,8 +68,9 @@ sysStatus SPI_1::writeAsync(uint8_t val[], uint16_t size){
    if (IFG2 & UCA0TXIFG){ //TX reg is empty
 
        __disable_interrupt();// Critical Section Need to avoid race condition (note: THIS OCCURS OTHERWISE!)
-       UCA0TXBUF = USCI0_txBuff[USCI0_txAvail-1];
+       UCA0TXBUF = USCI0_txBuff[USCI0_txPos];
        USCI0_txAvail--;
+       USCI0_txPos++;
        __enable_interrupt();
    }
    //UCA0TXBUF = USCI0_txBuff[USCI0_txAvail-1];
@@ -87,9 +92,10 @@ sysStatus SPI_1::readAsync(uint16_t numBytes){
    USCI0_status=spiState::RECEIVE;
    if (IFG2 & UCA0TXIFG){ //TX reg is empty
 
-       __disable_interrupt();// Critical Section
-       UCA0TXBUF = USCI0_txBuff[USCI0_txAvail-1];
+       __disable_interrupt();// Critical Section Need to avoid race condition (note: THIS OCCURS OTHERWISE!)
+       UCA0TXBUF = USCI0_txBuff[USCI0_txPos];
        USCI0_txAvail--;
+       USCI0_txPos++;
        __enable_interrupt();
    }
    return SUCCESS;
@@ -105,6 +111,7 @@ sysStatus SPI_1::read(uint16_t numBytes){
 
 sysStatus SPI_1::getRxBuff(uint8_t buffer[], uint16_t size){
      USCI0_rxAvail=0;
+     USCI0_rxPos=0;
      return sys_cpBuff((uint8_t*) USCI0_rxBuff, buffer, size, (uint16_t) 0);
 }
 
@@ -123,7 +130,7 @@ spiState SPI_1::getStatus(){
 //        if( USCI0_status==spiState::RECEIVE || USCI0_status==spiState::DUPLEX){ //SPI is in RECIEVE MODE
 //            if(USCI0_rxAvail>=SPI_BUFF_SIZE) //if the buffer is full
 //                return;
-//            USCI0_rxBuff[USCI0_rxAvail] = (uint8_t) UCA0RXBUF; //SUUUUUUUUUUPer unsafe, fix later
+//            USCI0_rxBuff[USCI0_rxPos] = (uint8_t) UCA0RXBUF; //SUUUUUUUUUUPer unsafe, fix later
 //            USCI0_rxAvail++;
 //
 //        }else if(USCI0_status==spiState::TRANSMIT){ //SPI is in TRANSMIT MODE
@@ -132,9 +139,11 @@ spiState SPI_1::getStatus(){
 //
 //            if(USCI0_txAvail==0){
 //                USCI0_status=spiState::IDLE;
+//                USCI0_txPos=0;
 //            }else{
-//                UCA0TXBUF = USCI0_txBuff[USCI0_txAvail-1];
+//                UCA0TXBUF = USCI0_txBuff[USCI0_txPos];
 //                USCI0_txAvail--;
+//                USCI0_txPos++;
 //            }
 //        }
 //    }
