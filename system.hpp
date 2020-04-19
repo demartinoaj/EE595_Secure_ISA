@@ -26,13 +26,16 @@
 #define PIN6                   (0x40)
 #define PIN7                   (0x80)
 
+#define USE_USCI_A0
+#define USE_USCI_B0
+
 enum sysStatus{SUCCESS, ERROR};
 
 struct PIN{
-    uint8_t outReg;
-    uint8_t dirReg;
+    PIN(volatile uint8_t* _outReg, volatile uint8_t* _dirReg, uint8_t _num): outReg(_outReg), dirReg(_dirReg), num(_num){};
+    volatile uint8_t* outReg;
+    volatile uint8_t* dirReg;
     uint8_t num;
-    PIN(uint8_t _outReg, uint8_t _dirReg, uint8_t _num): outReg(_outReg), dirReg(_dirReg), num(_num){};
 };
 //Functions
 

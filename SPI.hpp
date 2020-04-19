@@ -36,43 +36,30 @@
 
 enum class spiState {IDLE, TRANSMIT, RECEIVE, DUPLEX};
 
-/*  Abstract base class for all SPI instances*/
-class SPI{
-public:
-    virtual sysStatus init(USCI* usciRegs)=0;                                        // Initialize one of the USCI in SPI mode
-    virtual sysStatus ChangeSettings()=0;                              // A user-defined function called in init(). Used to override default SPI settings
-    virtual sysStatus write(uint8_t bytes[], uint16_t size)=0;         // Write size bytes to the SPI bus. Blocking Note: size probably overkill
-    virtual sysStatus read(uint16_t numBytes)=0;                       // Read size bytes from the SPI bus. Blocking
-    virtual sysStatus writeAsync(uint8_t bytes[], uint16_t size)=0;    // Write size bytes to the SPI bus. Non-Blocking
-    virtual sysStatus readAsync(uint16_t numBytes)=0;                  // Read size bytes from the SPI bus. Non-Blocking. Use GetRxData() to read
-    virtual uint8_t getNumBytesRx()=0;                                 // Get the current number of bytes received
-    virtual spiState getStatus()=0;                                    // Return the current SPI state
-    virtual sysStatus getRxBuff(uint8_t returnBuff[], uint16_t size)=0;// Populates returnBuffer with size bytes from the Rx buffer, clears size bytes Rx buffer
-};
-
-/* SPI implementation for USCI A0
- *      Derive from this class and implement ChangeSettings() to change the default settings
+/* SPI implementation
 */
 
-class SPI_1:public SPI{
-    friend void USCIA0RX_ISR(void);
+class SPI{
+    friend void SPI_RxCallbackISR(void* SPI_obj,USCI& USCI_inst);
     template <typename Type>
     friend sysStatus sys_cpBuff(Type inBuff[], Type outBuff[], uint16_t size, uint16_t offset);
 
 public:
-    sysStatus init(USCI* usciRegs);
+    SPI(USCI& _USCI_inst):USCI_inst(_USCI_inst){};
+    virtual sysStatus init();
     virtual sysStatus ChangeSettings();
-    sysStatus write(uint8_t val[], uint16_t size);
-    sysStatus read(uint16_t numBytes);
-    sysStatus writeAsync(uint8_t bytes[], uint16_t size);
-    sysStatus readAsync(uint16_t numBytes);
+    virtual sysStatus write(uint8_t val[], uint16_t size);
+    virtual sysStatus read(uint16_t numBytes);
+    virtual sysStatus writeAsync(uint8_t bytes[], uint16_t size);
+    virtual sysStatus readAsync(uint16_t numBytes);
 
-    spiState getStatus();
+    virtual spiState getStatus();
 
-    uint8_t getNumBytesRx();
-    sysStatus getRxBuff(uint8_t buffer[], uint16_t size);
-//protected:
-//    spiState status=spiState::IDLE;     // The status of the enum
+    virtual uint8_t getNumBytesRx();
+    virtual sysStatus getRxBuff(uint8_t buffer[], uint16_t size);
+protected:
+    USCI& USCI_inst;
+    volatile spiState status=spiState::IDLE;     // The status of the enum
 
 };
 
