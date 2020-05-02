@@ -49,13 +49,14 @@ void main(void)
         //SPI1.getRxBuff(&buffer, 1);
         SRAM.getStatusReg(&buffer);
         //SRAM.getStatusReg(&buffer);
-        SRAM.writeByte(0xDEAD, 0x42);
-        SRAM.readByte(0xDEAD, &returnData);
+        //SRAM.writeByte(0xDEAD, 0x42);
+        SRAM.readByte(0x0FFF, &returnData);
 
         __delay_cycles(5000);
+        SRAM.readByte(0x3FFF, &returnData);
+        __delay_cycles(5000);
 
-
-
+        //USCIA0.initUART();
 
 //        P1OUT &=~PIN3;
 //        SPI1.write(0x01);
@@ -68,3 +69,4 @@ void main(void)
     }
 
 }
+

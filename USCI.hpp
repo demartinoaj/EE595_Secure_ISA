@@ -40,6 +40,7 @@ public:
     virtual void TxByte(uint8_t data)=0;
     virtual uint8_t RxByte()=0;
     virtual sysStatus TxReady()=0;
+    virtual sysStatus initUART();
 
 protected:
     void (*txPtr)(void*, USCI &USCI);
@@ -52,7 +53,8 @@ class USCI_A0 :public USCI{
     friend void USCI0TX_ISR(void);
 public:
     virtual sysStatus initSPI(SPI_settings &settings);    // Configure the USCI to transmit the SPI protocol
-    virtual sysStatus initUART(UART_settings &settings);  // Configure the USCI to transmit the UART protocol
+    virtual sysStatus initUART();  // Configure the USCI to transmit the UART protocol
+    virtual sysStatus initUART(UART_settings &settings);
     virtual void TxByte(uint8_t data);
     virtual uint8_t RxByte();
     virtual sysStatus TxReady();
