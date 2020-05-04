@@ -6,7 +6,6 @@
  *		Company: The University of Southern California
  */
 #include "USCI.hpp"
-#include <msp430g2553.h>
 
 #ifdef USE_USCI_A0
 USCI_A0 USCIA0;
@@ -71,32 +70,20 @@ sysStatus USCI_A0::initSPI(SPI_settings &settings){
 
   return SUCCESS;
 }
-sysStatus initUART(UART_settings &settings)
-{
-    return ERROR;
-}
 
-sysStatus USCI_A0::initUART(){
+sysStatus USCI_A0::initUART(UART_settings &settings){
     //------------------- Configure the Clocks -------------------//
 
      if (CALBC1_1MHZ==0xFF)   // If calibration constant erased
         {
            while(1);          // do not load, trap CPU!!
         }
+     UCA0CTL1 |= UCSWRST;             // Clear UCSWRST to enable USCI_A0
 
       DCOCTL  = 0;             // Select lowest DCOx and MODx settings
       BCSCTL1 = CALBC1_1MHZ;   // Set range
       DCOCTL  = CALDCO_1MHZ;   // Set DCO step + modulation
 
-     //---------------- Configuring the LED's ----------------------//
-
-      P1DIR  |=  BIT0 + BIT6;  // P1.0 and P1.6 output
-      P1OUT  &= ~BIT0 + BIT6;  // P1.0 and P1.6 = 0
-
-     //--------- Setting the UART function for P1.1 & P1.2 --------//
-
-      P1SEL  |=  BIT1 + BIT2;  // P1.1 UCA0RXD input
-      P1SEL2 |=  BIT1 + BIT2;  // P1.2 UCA0TXD output
 
 
      //------------ Configuring the UART(USCI_A0) ----------------//
@@ -112,14 +99,13 @@ sysStatus USCI_A0::initUART(){
      //---------------- Enabling the interrupts ------------------//
 
       IE2 |= UCA0TXIE;                  // Enable the Transmit interrupt
-      IE2 |= UCA0RXIE;                  // Enable the Receive  interrupt
-      _BIS_SR(GIE);                     // Enable the global interrupt
+      //IE2 |= UCA0RXIE;                  // Enable the Receive  interrupt
+      /* UART PINS */
 
-      UCA0TXBUF = 'A';                  // Transmit a byte
+       P1SEL  |=  BIT1 + BIT2;  // P1.1 UCA0RXD input
+       P1SEL2 |=  BIT1 + BIT2;  // P1.2 UCA0TXD output
 
-      _BIS_SR(LPM0_bits + GIE);         // Going to LPM0
-
-    return ERROR; //TO DO
+    return SUCCESS; //TO DO
 }
 
 void USCI_A0::TxByte(uint8_t data){
@@ -175,7 +161,7 @@ sysStatus USCI_B0::initSPI(SPI_settings &settings){
 
   UCB0CTL1 &= ~UCSWRST;                     // Exit Reset mode, enabling the module
   IE2 |= UCB0RXIE;                          // Enable USCI0 RX interrupt
-  //IE2 |= UCB0TXIE;                          // Enable USCI0 TX interrupt
+  //IE2 |= UCB0TXIE;                        // Enable USCI0 TX interrupt
   //IFG2 &= ~UCB0TXIFG;
 
   UCB0BR0 = settings.prescalar;                          // Run the clock as fast as possible(prescalar registers to 0)
@@ -227,33 +213,36 @@ void USCI::registerTxCallback(void* _comDriverObj, void (*_txPtr)(void*, USCI&))
 
 #pragma vector=USCIAB0RX_VECTOR
 __interrupt void USCI0RX_ISR(void){
-    if (IFG2 & UCA0RXIFG){
+    if ((IFG2 & UCA0RXIFG) && (IE2 & UCA0RXIE )){
         USCIA0.rxPtr(USCIA0.comDriverObj, USCIA0);
-    }else if(IFG2 & UCB0RXIFG){
+    }
+    if((IFG2 & UCB0RXIFG) && (IE2 & UCB0RXIE )){
         USCIB0.rxPtr(USCIB0.comDriverObj, USCIB0);
     }
 }
 
-__interrupt void ReceiveInterrupt(void)
-{
-  P1OUT  ^= BIT6;     // light up P1.6 LED on RX
-  IFG2 &= ~UCA0RXIFG; // Clear RX flag
-}
-
 #pragma vector=USCIAB0TX_VECTOR
 __interrupt void USCI0TX_ISR(void){
-    if (IFG2 & UCA0TXIFG){
+    if ((IFG2 & UCA0TXIFG) && (IE2 & UCA0TXIE )){
         USCIA0.txPtr(USCIA0.comDriverObj, USCIA0);
-    }else if(IFG2 & UCB0TXIFG){
+    }
+    if((IFG2 & UCB0TXIFG) && (IE2 & UCB0TXIE )){
         USCIB0.txPtr(USCIB0.comDriverObj, USCIB0);
     }
 }
 
-__interrupt void TransmitInterrupt(void)
-{
-  P1OUT  ^= BIT0;//light up P1.0 Led on Tx
-  UCA0TXBUF = 'A';
-//  if(iterator<12)
+///////////////////////////////////////////////////////////////////
+//__interrupt void ReceiveInterrupt(void)
+//{
+//  P1OUT  ^= BIT6;     // light up P1.6 LED on RX
+//  IFG2 &= ~UCA0RXIFG; // Clear RX flag
+//}
+//
+//__interrupt void TransmitInterrupt(void)
+//{
+//  P1OUT  ^= BIT0;//light up P1.0 Led on Tx
+//  UCA0TXBUF = 'A';
+////  if(iterator<12)
 //  {
 //      UCA0TXBUF =String[iterator++];
 //  }
@@ -261,10 +250,10 @@ __interrupt void TransmitInterrupt(void)
 //      iterator=0;
 
   //for(int i=0; i< 4000; i++);
-}
+//}
 
-//-----------------------------------------------------------------------//
-//                Transmit and Receive interrupts                        //
-//-----------------------------------------------------------------------//
+//////////////////////////////////////////////////////////////
+
+
 
 

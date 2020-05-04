@@ -58,7 +58,7 @@ sysStatus Micron23k640_SRAM::writeByte(uint16_t address, uint8_t data){
     return SUCCESS;
 }
 sysStatus Micron23k640_SRAM::writeSequential(uint16_t address, uint8_t data[], uint16_t size){
-
+ return ERROR; // TODO
 }
 sysStatus Micron23k640_SRAM::readByte(uint16_t address, uint8_t* returnData){
     uint8_t MSB=address>>8;
@@ -74,7 +74,7 @@ sysStatus Micron23k640_SRAM::readByte(uint16_t address, uint8_t* returnData){
     return SUCCESS;
 }
 sysStatus Micron23k640_SRAM::readSequential(uint16_t address, uint8_t* returnData, uint16_t size){
-
+    return ERROR;// TODO
 }
 
 
