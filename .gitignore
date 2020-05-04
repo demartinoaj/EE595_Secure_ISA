@@ -1,0 +1,6 @@
+*.project
+*.ccsproject
+*.cmd
+*.cproject
+.settings/
+targetConfigs/
