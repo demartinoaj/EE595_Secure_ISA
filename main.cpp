@@ -3,11 +3,12 @@
  */
 #include "system.hpp"
 #include "SPI.hpp"
+#include "UART.hpp"
 #include "Micron23K640_SRAM.hpp"
-#include "USCI.hpp"
 
 SPI SPI1(USCIB0);
-//
+UART UART0(USCIA0);
+
 PIN SRAM_CS(&P1OUT,&P1DIR,PIN3);
 Micron23k640_SRAM SRAM(&SPI1, SRAM_CS);
 
@@ -28,7 +29,8 @@ void main(void)
     P1OUT |=PIN3;
 
     volatile uint32_t i;        // volatile to prevent optimization
-    SPI1.init();
+    SPI1.init();                // Initialize buses
+    UART0.init();
     __enable_interrupt();
     SRAM.init();
 
@@ -49,13 +51,14 @@ void main(void)
         //SPI1.getRxBuff(&buffer, 1);
         SRAM.getStatusReg(&buffer);
         //SRAM.getStatusReg(&buffer);
-        SRAM.writeByte(0xDEAD, 0x42);
-        SRAM.readByte(0xDEAD, &returnData);
+        //SRAM.writeByte(0xDEAD, 0x42);
+        SRAM.readByte(0x0FFF, &returnData);
 
         __delay_cycles(5000);
+        SRAM.readByte(0x3FFF, &returnData);
+        __delay_cycles(5000);
 
-
-
+        UART0.write((uint8_t* )"test",4);
 
 //        P1OUT &=~PIN3;
 //        SPI1.write(0x01);
@@ -68,3 +71,4 @@ void main(void)
     }
 
 }
+
