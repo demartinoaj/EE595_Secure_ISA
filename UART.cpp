@@ -14,8 +14,11 @@
 void UART_RxCallbackISR(void* UART_obj,USCI& USCI_inst){
     UART* UART_inst = reinterpret_cast<UART*>(UART_obj);
 
-        if(UART_inst->rxAvail>=SERIAL_BUFF_SIZE) //if the buffer is full
+        if(UART_inst->rxAvail>=SERIAL_BUFF_SIZE){ //if the buffer is full
+            uint8_t garbage = USCI_inst.RxByte(); //clear Rx interrupt
+            (void)garbage;
             return;
+        }
         UART_inst->rxBuff[UART_inst->rxAvail] = USCI_inst.RxByte();
         UART_inst->rxAvail++;
 
@@ -80,14 +83,7 @@ sysStatus UART::readAsync(uint16_t numBytes){
 
     __disable_interrupt();// Critical Section Need to avoid race condition (note: THIS OCCURS OTHERWISE!)
 
-   txAvail+=numBytes;
    status=SerialState::RECEIVE;
-   if (USCI_inst.TxReady()==SUCCESS){ //TX reg is empty
-
-       USCI_inst.TxByte(this->txBuff[this->txPos]);
-       this->txAvail--;
-       this->txPos++;
-   }
 
    __enable_interrupt();
    return SUCCESS;

@@ -40,6 +40,7 @@ public:
     virtual void TxByte(uint8_t data)=0;
     virtual uint8_t RxByte()=0;
     virtual sysStatus TxReady()=0;
+    virtual BOOL isBusy()=0;
 
 protected:
     void (*txPtr)(void*, USCI &USCI);
@@ -56,6 +57,7 @@ public:
     virtual void TxByte(uint8_t data);
     virtual uint8_t RxByte();
     virtual sysStatus TxReady();
+    virtual BOOL isBusy();
 
 protected:
     static uint8_t m_lock;
@@ -70,6 +72,7 @@ public:
     virtual void TxByte(uint8_t data);
     virtual uint8_t RxByte();
     virtual sysStatus TxReady();
+    virtual BOOL isBusy();
 
 protected:
     static uint8_t m_lock;

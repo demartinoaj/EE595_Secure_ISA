@@ -16,23 +16,26 @@ void SPI_RxCallbackISR(void* SPI_obj,USCI& USCI_inst){
     SPI* spi_inst = reinterpret_cast<SPI*>(SPI_obj);
 
     if( spi_inst->status==SerialState::RECEIVE || spi_inst->status==SerialState::DUPLEX){ //SPI is in RECIEVE MODE
-        if(spi_inst->rxAvail>=SERIAL_BUFF_SIZE) //if the buffer is full
+        if(spi_inst->rxAvail>=SERIAL_BUFF_SIZE){ //if the buffer is full
+            uint8_t garbage = USCI_inst.RxByte(); //clear Rx interrupt
+            (void)garbage;
             return;
+        }
         spi_inst->rxBuff[spi_inst->rxAvail] = USCI_inst.RxByte();
         spi_inst->rxAvail++;
 
     }else if(spi_inst->status==SerialState::TRANSMIT){ //SPI is in TRANSMIT MODE
         uint8_t garbage = USCI_inst.RxByte(); //clear Rx interrupt
         (void)garbage;
+    }
 
-        if(spi_inst->txAvail==0){
-            spi_inst->status=SerialState::IDLE;
-            spi_inst->txPos=0;
-        }else{
-            USCI_inst.TxByte(spi_inst->txBuff[spi_inst->txPos]);
-            spi_inst->txAvail--;
-            spi_inst->txPos++;
-        }
+    if(spi_inst->txAvail==0){
+        spi_inst->status=SerialState::IDLE;
+        spi_inst->txPos=0;
+    }else{
+        USCI_inst.TxByte(spi_inst->txBuff[spi_inst->txPos]);
+        spi_inst->txAvail--;
+        spi_inst->txPos++;
     }
 
 }
