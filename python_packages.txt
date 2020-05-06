@@ -1,0 +1,9 @@
+Python packages:
+
+pyserial
+
+
+
+
+
+Cite: https://stackoverflow.com/questions/45505958/pyserial-reading-hex-value-from-mcu
