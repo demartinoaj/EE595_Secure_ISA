@@ -29,7 +29,7 @@
 #define USE_USCI_A0
 #define USE_USCI_B0
 
-#define DEBUG //Comment out to exit debug mode
+//#define DEBUG //Comment out to exit debug mode
 
 enum sysStatus{SUCCESS, ERROR};
 enum BOOL{FLASE, TRUE};

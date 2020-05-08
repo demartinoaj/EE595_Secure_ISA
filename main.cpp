@@ -8,11 +8,12 @@
 #include <string.h>
 #define MAX_SRAM_ADDRESS 0x1FFF
 
-enum pufStates{IDLE, RESET, P_ALL, P_ONE};
+enum pufStates{IDLE, RESET, P_ALL, P_ONE, READ_KEY};
 void main(void)
 {
     const char* error="Error";
     const char* endline="\n\r";
+    uint8_t resultValues[8];
 
     /* Constructors*/
     SPI SPI1(USCIB0);
@@ -45,16 +46,20 @@ void main(void)
     UART0.write((uint8_t*) msg ,strlen(msg));
 #endif
     pufStates state= IDLE;
+
+    /*MAIN LOOP*/
     while(1){
 
         uint8_t returnData=0;
         SRAM.getStatusReg(&buffer);
+
 #ifdef DEBUG
         P1OUT ^= PIN0;              // toggle P1.0, LED1
 #endif
         switch(state){
         case IDLE:
 #ifdef DEBUG
+
     msg="Awaiting Command r: reset, a: print all, o: print one\n\r";
     UART0.write((uint8_t*) msg ,strlen(msg));
 #endif
@@ -66,6 +71,8 @@ void main(void)
                 state=P_ALL;
             else if(buffer=='o')
                 state=P_ONE;
+            else if(buffer=='s')
+                state=READ_KEY;
             else
                 UART0.write((uint8_t*) error,strlen(error));
             //TODO: better errors
@@ -91,19 +98,21 @@ void main(void)
 
         case P_ONE:
 #ifdef DEBUG
-            msg="Awaiting Command (single byte SRAM address)\n\r";
+            msg="Awaiting Command (Two byte SRAM address)\n\r";
             UART0.write((uint8_t*) msg ,strlen(msg));
-            SRAM.writeByte(0x70, 0x5E); //Useful to read a non-constant value (type p, responds with ^)
+            SRAM.writeByte(0x6869, 0x5E); //Useful to read a non-constant value (type hi, responds with ^)
 #endif
-            UART0.read(1);
-            UART0.getRxBuff(&buffer,1);
+            UART0.read(2);
+            UART0.getRxBuff(resultValues,2);
 #ifdef DEBUG
             msg="Reading from: ";
             UART0.write((uint8_t*) msg ,strlen(msg));
-            UART0.write((uint8_t*) &buffer ,1);
+            UART0.write((uint8_t*) resultValues ,2);
             UART0.write((uint8_t*)endline,strlen(endline));
 #endif
-            if(SRAM.readByte(buffer, &returnData)== ERROR)
+            uint16_t sramAddress=resultValues[0]<<8;
+            sramAddress|=resultValues[1];
+            if(SRAM.readByte(sramAddress, &returnData)== ERROR)
                 UART0.write((uint8_t*) error,strlen(error));
 #ifdef DEBUG
             msg="Value: ";
@@ -115,6 +124,11 @@ void main(void)
                 UART0.write((uint8_t*) error,strlen(error));
             state=IDLE;
             break;
+
+        case READ_KEY:
+
+            break;
+
         }
         UART0.flushRxBuff();
 
