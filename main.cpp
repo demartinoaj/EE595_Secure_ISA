@@ -79,6 +79,11 @@ void main(void)
             break;
         case RESET:
             state=IDLE;
+#ifdef DEBUG
+
+    msg=" SRAM Reset\n\r";
+    UART0.write((uint8_t*) msg ,strlen(msg));
+#endif
             //TODO
             break;
 
