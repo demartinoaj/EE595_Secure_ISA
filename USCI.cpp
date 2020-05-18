@@ -78,7 +78,7 @@ sysStatus USCI_A0::initUART(UART_settings &settings){
         {
            while(1);          // do not load, trap CPU!!
         }
-     UCA0CTL1 |= UCSWRST;             // Clear UCSWRST to enable USCI_A0
+     UCA0CTL1 |= UCSWRST;             // First disable UCA0
 
       DCOCTL  = 0;             // Select lowest DCOx and MODx settings
       BCSCTL1 = CALBC1_1MHZ;   // Set range
@@ -93,13 +93,13 @@ sysStatus USCI_A0::initUART(UART_settings &settings){
       UCA0BR0   =  104;                 // 104 From datasheet table-
       UCA0BR1   =  0;                   // -selects baudrate =9600,clk = SMCLK
       UCA0MCTL  =  UCBRS_1;             // Modulation value = 1 from datasheet
-      UCA0STAT |=  UCLISTEN;            // loop back mode enabled
+      //UCA0STAT |=  UCLISTEN;            // loop back mode enabled
       UCA0CTL1 &= ~UCSWRST;             // Clear UCSWRST to enable USCI_A0
 
      //---------------- Enabling the interrupts ------------------//
 
-      IE2 |= UCA0TXIE;                  // Enable the Transmit interrupt
-      //IE2 |= UCA0RXIE;                  // Enable the Receive  interrupt
+      //IE2 |= UCA0TXIE;                  // Enable the Transmit interrupt
+      IE2 |= UCA0RXIE;                  // Enable the Receive  interrupt
       /* UART PINS */
 
        P1SEL  |=  BIT1 + BIT2;  // P1.1 UCA0RXD input
@@ -123,7 +123,11 @@ sysStatus USCI_A0::TxReady(){
     return ERROR;
 }
 
-
+BOOL USCI_A0::isBusy(){
+    if (UCA0STAT & UCBUSY)
+        return TRUE;
+    return FLASE;
+}
 
 // B0 functions
 sysStatus USCI_B0::initSPI(SPI_settings &settings){
@@ -196,7 +200,11 @@ sysStatus USCI_B0::TxReady(){
     return ERROR;
 }
 
-
+BOOL USCI_B0::isBusy(){
+    if (UCB0STAT & UCBUSY)
+        return TRUE;
+    return FLASE;
+}
 
 
 

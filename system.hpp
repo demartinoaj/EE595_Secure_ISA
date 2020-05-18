@@ -29,7 +29,11 @@
 #define USE_USCI_A0
 #define USE_USCI_B0
 
+
+#define DEBUG //Comment out to exit debug mode
+
 enum sysStatus{SUCCESS, ERROR};
+enum BOOL{FLASE, TRUE};
 
 struct PIN{
     PIN(volatile uint8_t* _outReg, volatile uint8_t* _dirReg, uint8_t _num): outReg(_outReg), dirReg(_dirReg), num(_num){};

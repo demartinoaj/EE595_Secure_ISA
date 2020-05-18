@@ -31,7 +31,7 @@
 #define SERIAL_HPP_
 
 
-#define SERIAL_BUFF_SIZE 16
+#define SERIAL_BUFF_SIZE 64
 #include "USCI.hpp"
 
 enum class SerialState {IDLE, TRANSMIT, RECEIVE, DUPLEX};
@@ -51,6 +51,7 @@ public:
     virtual SerialState getStatus();
     virtual uint8_t getNumBytesRx();
     virtual sysStatus getRxBuff(uint8_t buffer[], uint16_t size);
+    virtual void flushRxBuff();
 
 protected:
     USCI& USCI_inst;
