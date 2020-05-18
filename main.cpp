@@ -12,7 +12,7 @@ enum pufStates{IDLE, RESET, P_ALL, P_ONE, READ_KEY};
 void main(void)
 {
     const char* error="Error";
-    const char* endline="\n\r";
+    const char* endline="\r\n";
     uint8_t resultValues[8];
 
     /* Constructors*/
@@ -81,7 +81,7 @@ void main(void)
             state=IDLE;
 #ifdef DEBUG
 
-    msg=" SRAM Reset\n\r";
+    msg=" SRAM Reset\r\n";
     UART0.write((uint8_t*) msg ,strlen(msg));
 #endif
             //TODO

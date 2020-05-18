@@ -16,7 +16,10 @@ KeyByte=b''
 J=0
 i=0
 SRAM_Address=0x0000
+#send "read all command to state machine"
+s.write(b'a')
 while(1):
+
     res = s.read()
     KeyByte+=res
     J=J+1
