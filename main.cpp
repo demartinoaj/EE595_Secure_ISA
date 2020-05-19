@@ -135,7 +135,7 @@ void main(void)
             break;
 
         }
-        UART0.flushRxBuff();
+       // UART0.flushRxBuff();
 
     }
 

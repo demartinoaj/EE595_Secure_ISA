@@ -1,41 +1,59 @@
 import serial
 import binascii
+import time
 from tkinter import *
+from struct import *
 
-address=[
-    0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,
-    0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,
-    0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x29,
-    0x30,0x31,0x32
+address_MSB=[
+    b'\x0A',b'\x01',b'\x02',b'\x03',b'\x04',b'\x05',b'\x06',b'\x07',b'\x08',b'\x09',
+    b'\x1A',b'\x11',b'\x12',b'\x13',b'\x14',b'\x15',b'\x16',b'\x17',b'\x18',b'\x19',
+    b'\x2A',b'\x21',b'\x22',b'\x23',b'\x24',b'\x25',b'\x26',b'\x27',b'\x28',b'\x29',
+    b'\x3A',b'\x31',b'\x32'
 ]
 
+address_LSB=[
+    b'\x0A',b'\x01',b'\x02',b'\x03',b'\x04',b'\x05',b'\x06',b'\x07',b'\x08',b'\x09',
+    b'\x1A',b'\x11',b'\x12',b'\x13',b'\x14',b'\x15',b'\x16',b'\x17',b'\x18',b'\x19',
+    b'\x2A',b'\x21',b'\x22',b'\x23',b'\x24',b'\x25',b'\x26',b'\x27',b'\x28',b'\x29',
+    b'\x3A',b'\x31',b'\x32'
+]
  #set a timeout of 5 seconds
-s = serial.Serial('COM13', timeout=5, write_timeout=5)
-
+port='COM9'
+try:
+    s = serial.Serial(port, timeout=5, write_timeout=5)
+except:
+    print("Error Opening Serial Port "+ (port))
+    
 key_128=b''
 key_192=b''
 key_256=b''
 J=0
 while(1):
     s.write(b'o')
-    s.write(address[J])
-    res = s.readline()
-    if res.size()==0:
+    time.sleep(0.01)
+    s.write(address_MSB[J])
+    time.sleep(0.01)
+    s.write(address_LSB[J])
+    time.sleep(0.01)
+
+    res = s.read()
+    rest=s.readline()
+
+    if len(res)==0:
         print("Error: Serial Port timeout occured")
         exit()
 
-    elif res.size>3:
+    elif len(rest)>2:
         #microcontroller encountered an Error
-        print(res)
+        print("Microcontroller encountered an Error")
         exit()
     #KeyByte+=res
-
     if( J<16):
-        key_128 += res[0]
+        key_128 += res
     if(J<24):
-        key_192 += res[0]
+        key_192 += res
     if(J<32):
-        key_256 += res[0]
+        key_256 += res
     if(J==32):
         break
     J = J + 1
