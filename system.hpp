@@ -26,20 +26,36 @@
 #define PIN6                   (0x40)
 #define PIN7                   (0x80)
 
+/* pre-processor flags*/
 #define USE_USCI_A0
 #define USE_USCI_B0
 
+//#define DEBUG //Comment out to disable debug mode
 
-//#define DEBUG //Comment out to exit debug mode
-
+/*enums*/
 enum sysStatus{SUCCESS, ERROR};
 enum BOOL{FLASE, TRUE};
 
-struct PIN{
-    PIN(volatile uint8_t* _outReg, volatile uint8_t* _dirReg, uint8_t _num): outReg(_outReg), dirReg(_dirReg), num(_num){};
+/* Pin class, used to abstract a pin */
+class PIN{
+public:
+    PIN(volatile uint8_t* _outReg, volatile uint8_t* _dirReg, uint16_t _num): outReg(_outReg), dirReg(_dirReg), num(_num){};
+    void setHigh(){
+        (*dirReg) |= num;
+    }
+    void setLow(){
+        (*dirReg) &= ~num;
+    }
+    void setInput(){
+        (*dirReg) &= ~num;
+    }
+    void setOutput(){
+        (*dirReg) |= num;
+    }
+private:
     volatile uint8_t* outReg;
     volatile uint8_t* dirReg;
-    uint8_t num;
+    uint16_t num;
 };
 //Functions
 

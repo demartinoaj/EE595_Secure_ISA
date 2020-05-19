@@ -9,19 +9,21 @@
 #include "Serial.hpp"
 
 
-
-
 sysStatus Serial::write(uint8_t val[], uint16_t size){
+    /*call derived class write function*/
     if(writeAsync(val, size)==ERROR)
         return ERROR;
+    /* wait for transfer to finish*/
     while (txAvail!=0 || status!=SerialState::IDLE || USCI_inst.isBusy()==TRUE);              // wait on Tx flush
     return SUCCESS;
 }
 
 
 sysStatus Serial::read(uint16_t numBytes){
+    /*call derived class read function*/
     if(readAsync(numBytes)==ERROR)
         return ERROR;
+    /* wait for transfer to finish*/
     while (rxAvail<numBytes||status!=SerialState::IDLE ||USCI_inst.isBusy()==TRUE);              // wait on Rx finish
     numBytes=0;
     return SUCCESS;
@@ -35,7 +37,7 @@ sysStatus Serial::getRxBuff(uint8_t buffer[], uint16_t size){
          rxAvail-=size;
 
      sysStatus error=sys_cpBuff((uint8_t*) rxBuff, buffer, size, (uint16_t) 0);
-     __enable_interrupt();
+     __enable_interrupt(); //End Critical section
 
      return error;
 }

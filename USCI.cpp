@@ -4,8 +4,29 @@
  *  Created on: Apr 10, 2020
  *      Author: Andrew DeMartino
  *		Company: The University of Southern California
+ *
+ *  Description:
+ *      The Universal Serial Communication Interface(USCI) is used by the MSP430 series processor to control all types of
+ *      serial communication. Varrious varries support diffren modes, but UART and SPI are implmented here for use of this project
+ *
+ *
+ *  Sources:
+ *      I used the MSP430 G2X13 Datasheet (https://www.ti.com/lit/ds/symlink/msp430g2553.pdf)
+ *      and the MSP430x2xx Family Users's guide (https://www.ti.com/lit/ug/slau144j/slau144j.pdf)
+ *      to implement the driver. The code works as is with any MSP430 that uses USCI for SPI communication.
+ *
+ * How to use:
+ *  The actual hardware classes A0 and B0 are derived from the abstract base
+ *  The classes shouldn't be created directly, but instead the exported instances should be used
+ *  The A0 and B0 classes can be used to abstract harware to a software onlt serial controller class, for portability and ease of use
+ *
+ *
+ *  To Do:
+ *      Add I2C and CAN bus
  */
 #include "USCI.hpp"
+
+//Declarations
 
 #ifdef USE_USCI_A0
 USCI_A0 USCIA0;
@@ -16,11 +37,12 @@ USCI_B0 USCIB0;
 #endif
 
 
-
+// Initialize the two static variables
 uint8_t USCI_B0::m_lock=0;
 uint8_t USCI_A0::m_lock=0;
 
 sysStatus USCI_A0::initSPI(SPI_settings &settings){
+    /* Ensure USCI isn't in use already*/
     if(m_lock)
         return ERROR;
     else
@@ -72,6 +94,12 @@ sysStatus USCI_A0::initSPI(SPI_settings &settings){
 }
 
 sysStatus USCI_A0::initUART(UART_settings &settings){
+    /* Ensure USCI isn't in use already*/
+    if(m_lock)
+        return ERROR;
+    else
+        m_lock++;
+
     //------------------- Configure the Clocks -------------------//
 
      if (CALBC1_1MHZ==0xFF)   // If calibration constant erased
@@ -93,7 +121,7 @@ sysStatus USCI_A0::initUART(UART_settings &settings){
       UCA0BR0   =  104;                 // 104 From datasheet table-
       UCA0BR1   =  0;                   // -selects baudrate =9600,clk = SMCLK
       UCA0MCTL  =  UCBRS_1;             // Modulation value = 1 from datasheet
-      //UCA0STAT |=  UCLISTEN;            // loop back mode enabled
+      //UCA0STAT |=  UCLISTEN;          // loop back mode enabled
       UCA0CTL1 &= ~UCSWRST;             // Clear UCSWRST to enable USCI_A0
 
      //---------------- Enabling the interrupts ------------------//
@@ -105,7 +133,7 @@ sysStatus USCI_A0::initUART(UART_settings &settings){
        P1SEL  |=  BIT1 + BIT2;  // P1.1 UCA0RXD input
        P1SEL2 |=  BIT1 + BIT2;  // P1.2 UCA0TXD output
 
-    return SUCCESS; //TO DO
+    return SUCCESS;
 }
 
 void USCI_A0::TxByte(uint8_t data){
@@ -118,6 +146,8 @@ uint8_t USCI_A0::RxByte(){
 }
 
 sysStatus USCI_A0::TxReady(){
+    /*Check the Tx bit of the interrupt Flag*/
+    /* TXIFG is still set even if the interrupt is disabled, it indicates the module is ready to transmit*/
     if (IFG2 & UCA0TXIFG)
         return SUCCESS;
     return ERROR;
@@ -131,6 +161,7 @@ BOOL USCI_A0::isBusy(){
 
 // B0 functions
 sysStatus USCI_B0::initSPI(SPI_settings &settings){
+    /* Ensure USCI isn't in use already*/
     if(m_lock)
         return ERROR;
     else
@@ -168,7 +199,8 @@ sysStatus USCI_B0::initSPI(SPI_settings &settings){
   //IE2 |= UCB0TXIE;                        // Enable USCI0 TX interrupt
   //IFG2 &= ~UCB0TXIFG;
 
-  UCB0BR0 = settings.prescalar;                          // Run the clock as fast as possible(prescalar registers to 0)
+  /* Configure Pre-scalar*/
+  UCB0BR0 = settings.prescalar;             // Run the clock as fast as possible(prescalar registers to 0)
   UCB0BR1 = settings.prescalar>>8;
 
   /*SPI Pins*/
@@ -195,6 +227,8 @@ uint8_t USCI_B0::RxByte(){
 }
 
 sysStatus USCI_B0::TxReady(){
+    /*Check the Tx bit of the interrupt Flag*/
+    /* TXIFG is still set even if the interrupt is disabled, it indicates the module is ready to transmit*/
     if (IFG2 & UCB0TXIFG)
         return SUCCESS;
     return ERROR;
@@ -219,12 +253,17 @@ void USCI::registerTxCallback(void* _comDriverObj, void (*_txPtr)(void*, USCI&))
     comDriverObj=_comDriverObj;
 }
 
+/* Actual interrupts*/
 #pragma vector=USCIAB0RX_VECTOR
 __interrupt void USCI0RX_ISR(void){
     if ((IFG2 & UCA0RXIFG) && (IE2 & UCA0RXIE )){
-        USCIA0.rxPtr(USCIA0.comDriverObj, USCIA0);
+        if(USCIA0.rxPtr==0) // Ensure it exists!
+            return;
+        USCIA0.rxPtr(USCIA0.comDriverObj, USCIA0); // call function pointer
     }
     if((IFG2 & UCB0RXIFG) && (IE2 & UCB0RXIE )){
+        if(USCIB0.rxPtr==0)
+            return;
         USCIB0.rxPtr(USCIB0.comDriverObj, USCIB0);
     }
 }
@@ -232,35 +271,17 @@ __interrupt void USCI0RX_ISR(void){
 #pragma vector=USCIAB0TX_VECTOR
 __interrupt void USCI0TX_ISR(void){
     if ((IFG2 & UCA0TXIFG) && (IE2 & UCA0TXIE )){
+        if(USCIA0.txPtr==0)
+            return;
         USCIA0.txPtr(USCIA0.comDriverObj, USCIA0);
     }
     if((IFG2 & UCB0TXIFG) && (IE2 & UCB0TXIE )){
+        if(USCIB0.txPtr==0)
+            return;
         USCIB0.txPtr(USCIB0.comDriverObj, USCIB0);
     }
 }
 
-///////////////////////////////////////////////////////////////////
-//__interrupt void ReceiveInterrupt(void)
-//{
-//  P1OUT  ^= BIT6;     // light up P1.6 LED on RX
-//  IFG2 &= ~UCA0RXIFG; // Clear RX flag
-//}
-//
-//__interrupt void TransmitInterrupt(void)
-//{
-//  P1OUT  ^= BIT0;//light up P1.0 Led on Tx
-//  UCA0TXBUF = 'A';
-////  if(iterator<12)
-//  {
-//      UCA0TXBUF =String[iterator++];
-//  }
-//  else
-//      iterator=0;
-
-  //for(int i=0; i< 4000; i++);
-//}
-
-//////////////////////////////////////////////////////////////
 
 
 

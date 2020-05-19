@@ -6,7 +6,8 @@
  *      Company: The University of Southern California
  *
  *  Description:
- *      Universal Serial Communication Interface(USCI)
+ *      This module provides the abstract base class for all serial state machines
+ *      it requires a USCI instance to interact with the hardware
  *
  *  Sources:
  *      I used the MSP430 G2X13 Datasheet (https://www.ti.com/lit/ds/symlink/msp430g2553.pdf)
@@ -22,7 +23,6 @@
  *  Sync functions call async and wait for buffers to empty
  *
  *  To Do:
- *      Test Simplex
  *      Add Timeout Functionality
  *          Probably write a sys_clock module that tracks milliseconds
  */
@@ -36,7 +36,7 @@
 
 enum class SerialState {IDLE, TRANSMIT, RECEIVE, DUPLEX};
 
-/* SPI implementation
+/* Serial implementation
 */
 class Serial{
 
@@ -57,8 +57,8 @@ protected:
     USCI& USCI_inst;
     volatile SerialState status=SerialState::IDLE;     // The status of the enum
 
-    volatile uint8_t  rxBuff[SERIAL_BUFF_SIZE];      // The Rx buffer
-    volatile uint8_t  txBuff[SERIAL_BUFF_SIZE];      // The Tx buffer
+    volatile uint8_t  rxBuff[SERIAL_BUFF_SIZE];   // The Rx buffer
+    volatile uint8_t  txBuff[SERIAL_BUFF_SIZE];   // The Tx buffer
     volatile uint8_t  rxAvail=0;                  // The number of bytes currently in the Rx buffer
     volatile uint8_t  bytesToRead=0;              // The number of bytes waiting to be read
     volatile uint16_t txAvail=0;                  // The number of bytes currently in the Tx buffer
