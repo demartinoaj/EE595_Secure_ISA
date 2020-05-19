@@ -6,7 +6,9 @@
  *		Company: The University of Southern California
  *
  *	Description:
- *	    Universal Serial Communication Interface(USCI)
+ *	     This driver functions as the state machine for the Serial Peripheral Interface(SPI). It is derived
+ *	     from the serial class, which partially implments its function. It requires a reference to a USCI object
+ *	     to manage the underlying hardware.
  *
  *	Sources:
  *	    I used the MSP430 G2X13 Datasheet (https://www.ti.com/lit/ds/symlink/msp430g2553.pdf)
@@ -15,15 +17,11 @@
  *
  * Relevant Pins:
  *      SPI_1: 1.1 MISO, 1.2 MOSI, 1.3 SCLK
- *      SPI_2: 1.1 MISO, 1.2 MOSI, 1.3 SCLK* UPDATE
+ *      SPI_2: 1.6 MISO, 1.7 MOSI, 1.5 SCLK
  *
  *  To Do:
- *      Implement Full-duplex Communication
- *              Probably need to modify the interrupts and the spiState enum
- *      Test SPI_2
- *          Its pretty identical to SPI_1 so it *should* be fine
- *      Fix getRxBuff
- *          It works, but is very unsafe
+ *      Test Full-duplex Communication
+ *              It seems to work but a more thorough test is needed to weed out weird states
  *      Add Timeout Functionality
  *          Probably write a sys_clock module that tracks milliseconds
  */
@@ -36,16 +34,16 @@
 */
 
 class SPI: public Serial{
-    friend void SPI_RxCallbackISR(void* SPI_obj,USCI& USCI_inst);
+    friend void SPI_RxCallbackISR(void* SPI_obj,USCI& USCI_inst); // The Rx callback for when a byte is recieved
 
 public:
-    SPI(USCI& _USCI_inst):
+    SPI(USCI& _USCI_inst):              //Constructor
         Serial(_USCI_inst)
         {};
 
-    virtual sysStatus init();
-    virtual sysStatus writeAsync(uint8_t bytes[], uint16_t size);
-    virtual sysStatus readAsync(uint16_t numBytes);
+    virtual sysStatus init();          // Initializes the SPI bus, registers callback
+    virtual sysStatus writeAsync(uint8_t bytes[], uint16_t size); // Write a byte to the SPI bus without blocking
+    virtual sysStatus readAsync(uint16_t numBytes);               // Request bytes from the SPI bus without blocking
 
 };
 
