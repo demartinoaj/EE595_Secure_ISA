@@ -101,8 +101,8 @@ void main(void)
 #endif
             state=IDLE;
 
-            msg="Reset Success\r\n";
-            UART0.write((uint8_t*) msg ,strlen(msg));
+            char* msg2="Reset Success\r\n";
+            UART0.write((uint8_t*) msg2 ,strlen(msg2));
             break;
 
         case P_ALL:
